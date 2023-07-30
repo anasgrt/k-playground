@@ -46,7 +46,7 @@ jobs:
       - name: Read terraform version to install from '.terraform-version'
         id: tfversion
         run: >-
-          echo "version=$(cat ./.terraform-version)" >> $GITHUB_OUTPUT
+          echo "version=$(cat infra/.terraform-version)" >> $GITHUB_OUTPUT
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
