@@ -1,0 +1,119 @@
+name: "Terraform Plan on k-playground Repo"
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'infra/**'
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+
+  plan:
+    name: "Terraform Plan on kabisa-iam Account"
+    # environment: kabisa-iam
+    env: 
+      Github_Token: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    concurrency: k-playground
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./infra
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      # - uses: webfactory/ssh-agent@v0.7.0
+      #   with:
+      #     ssh-private-key: |
+      #        ${{ secrets.SSH_PRIVATE_KEY }}
+      #        ${{ secrets.SSH_PRIVATE_KEY_01 }}
+
+      # For Kabisa-iam Account
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: "eu-west-1"
+          role-session-name: MySessionName
+          role-skip-session-tagging: true
+
+      - name: Sts GetCallerIdentity
+        run: |
+            aws sts get-caller-identity
+
+      - name: Read terraform version to install from '.terraform-version'
+        id: tfversion
+        run: >-
+          echo "version=$(cat .terraform-version)" >> $GITHUB_OUTPUT
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ steps.tfversion.outputs.version }}
+
+      - name: terraform fmt
+        uses: dflook/terraform-fmt@v1
+        with:
+          path: ./infra
+
+      - name: Terraform Init
+        id: init
+        run: terraform init 
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+        
+      - name: Terraform Plan 
+        id: plan
+        run: terraform plan -lock=false -no-color
+        continue-on-error: true
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+  
+      - name: Update Pull Request
+        uses: actions/github-script@v6
+        env:
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+            <details><summary>Validation Output</summary>
+            \`\`\`\n
+            ${{ steps.validate.outputs.stdout }}
+            \`\`\`
+            </details>
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            <details><summary>Show Plan</summary>
+            \`\`\`\n
+            ${process.env.PLAN}
+            \`\`\`
+            </details>
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+           
+        
+
+
+
+
+
+
