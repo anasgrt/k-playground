@@ -4,6 +4,6 @@ resource "aws_instance" "github" {
   instance_type = "t2.nano"
 
   tags = {
-    Name = "Github-actions"
+    Name = "Github-action"
   }
 }
