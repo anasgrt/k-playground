@@ -3,7 +3,7 @@ name: "Terraform Plan on k-playground Repo"
 on:
   pull_request:
     branches:
-      - master
+      - main
     paths:
       - 'infra/**'
   workflow_dispatch:
