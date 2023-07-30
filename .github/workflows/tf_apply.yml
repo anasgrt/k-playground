@@ -1,0 +1,63 @@
+name: "Terraform Apply on k-playground Repo"
+
+on:
+  push:
+    branches:
+        - master
+    paths:
+        - 'infra/**'
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+
+  apply:
+    name: "Deploy to AWS"
+    # environment: kabisa-iam
+    runs-on: ubuntu-latest
+    concurrency: k-playground
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./infra
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      # - uses: webfactory/ssh-agent@v0.7.0
+      #   with:
+      #     ssh-private-key: |
+      #        ${{ secrets.SSH_PRIVATE_KEY }}
+      #        ${{ secrets.SSH_PRIVATE_KEY_01 }}
+
+      # For Kabisa-iam Account
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: "eu-west-1"
+          role-session-name: MySessionName
+          role-skip-session-tagging: true
+
+      - name: Read terraform version to install from '.terraform-version'
+        id: tfversion
+        run: >-
+          echo "version=$(cat ./.terraform-version)" >> $GITHUB_OUTPUT
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ steps.tfversion.outputs.version }}
+
+      - name: Terraform Init
+        id: init
+        run: 
+          terraform init 
+  
+      - name: Terraform Apply
+        id: apply
+        run: terraform apply -auto-approve -input=false
