@@ -14,7 +14,7 @@ jobs:
 
   apply:
     name: "TF apply on k-playground Repo"
-    # environment: kabisa-iam
+    environment: infra
     runs-on: ubuntu-latest
     concurrency: k-playground
     defaults:
