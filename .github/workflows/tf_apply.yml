@@ -3,7 +3,7 @@ name: "Terraform Apply on k-playground Repo"
 on:
   push:
     branches:
-        - master
+        - main
     paths:
         - 'infra/**'
   workflow_dispatch:
