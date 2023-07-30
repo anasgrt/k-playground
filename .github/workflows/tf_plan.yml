@@ -14,7 +14,7 @@ jobs:
 
   plan:
     name: "TF Plan on k-playground Repo"
-    # environment: kabisa-iam
+    environment: infra
     env: 
       Github_Token: ${{ secrets.GITHUB_TOKEN }}
     runs-on: ubuntu-latest
