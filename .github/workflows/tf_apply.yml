@@ -13,7 +13,7 @@ permissions: write-all
 jobs:
 
   apply:
-    name: "Deploy to AWS"
+    name: "TF apply on k-playground Repo"
     # environment: kabisa-iam
     runs-on: ubuntu-latest
     concurrency: k-playground

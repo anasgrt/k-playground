@@ -13,7 +13,7 @@ permissions: write-all
 jobs:
 
   plan:
-    name: "Terraform Plan on kabisa-iam Account"
+    name: "TF Plan on k-playground Repo"
     # environment: kabisa-iam
     env: 
       Github_Token: ${{ secrets.GITHUB_TOKEN }}
